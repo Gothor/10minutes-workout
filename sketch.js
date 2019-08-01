@@ -263,3 +263,7 @@ function draw() {
     text("Cliquez pour commencer l'entraînement", width / 2, height - 20);
   }
 }
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
