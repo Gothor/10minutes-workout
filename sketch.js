@@ -178,6 +178,12 @@ function setup() {
   started = false;
 
   computeAllSizes();
+
+  window.addEventListener("blur", function() {
+    if (music.isPlaying()) {
+      music.pause();
+    }
+  });
 }
 
 function mousePressed() {
