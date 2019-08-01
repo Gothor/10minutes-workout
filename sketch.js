@@ -14,6 +14,36 @@ let nextBip;
 let logo;
 let shade;
 let music;
+let timeSize;
+let clickToStartSize;
+let logoW;
+let logoH;
+const clickToStart = "Cliquez pour commencer l'entraînement";
+
+let activityWidth;
+
+function computeAllSizes() {
+  activityWidth = Math.min(width / 2, height / 2, 500);
+
+  clickToStartSize = 32;
+  textSize(clickToStartSize);
+  while(textWidth(clickToStart) > width - 20) {
+    clickToStartSize--;
+    textSize(clickToStartSize);
+  }
+
+  timeSize = Math.min(64, (height - activityWidth) / 2 - 20 - 20);
+
+  logoW = logo.width / width;
+  logoH = logo.height / (height - (clickToStartSize + 40) * 2);
+  if (logoW >= logoH) {
+    logoW = Math.min(logo.width, width);
+    logoH = logoW * logo.height / logo.width;
+  } else {
+    logoH = Math.min(logo.height, height - (clickToStartSize + 40) * 2);
+    logoW = logoH * logo.width / logo.height;
+  }
+}
 
 class Activity {
 
@@ -24,8 +54,8 @@ class Activity {
     this.image = image;
     this.startedTime = Infinity;
     this.progress = 0;
-    this.w = this.name === "Pause" ? 200 : 500;
-    this.h = 500;
+    this.w = this.name === "Pause" ? 0.4 : 1;
+    this.h = 1;
   }
 
   start() {
@@ -45,26 +75,28 @@ class Activity {
   }
 
   draw() {
-    let borderWidth = 10;
+    let w = this.w * activityWidth;
+    let h = this.h * activityWidth;
+    let borderWidth = activityWidth / 50;
 
     noStroke();
     fill(255, 150);
-    rect(-this.w / 2, -this.h / 2, this.w, this.h);
+    rect(-w / 2, -h / 2, w, h);
     fill(227, 111, 0);
-    rect(-this.w / 2, -this.h / 2, this.w * this.progress, this.h);
+    rect(-w / 2, -h / 2, w * this.progress, h);
 
     textSize(28);
     fill(0);
     if (this.image) {
-      image(this.image, -this.w / 2, -this.h / 2, this.w, this.h);
+      image(this.image, -w / 2, -h / 2, w, h);
     } else {
-      text(this.name, 0, 0);
+      text(this.name.split(' ').join('\n'), 0, 0);
     }
     
     noFill();
     stroke(255);
     strokeWeight(borderWidth);
-    rect(-this.w / 2 - borderWidth / 2, -this.h / 2 - borderWidth / 2, this.w + borderWidth, this.h + borderWidth, 20);
+    rect(-w / 2 - borderWidth / 2, -h / 2 - borderWidth / 2, w + borderWidth, h + borderWidth, borderWidth * 2);
   }
 
   isDone() {
@@ -145,6 +177,8 @@ function setup() {
   current = 0;
   started = false;
 
+  computeAllSizes();
+
   music.play();
 }
 
@@ -158,14 +192,14 @@ function mousePressed() {
 
 function idle() {
   let activity = order[current];
-  t = Date.now() ;
+  t = Date.now();
 
   activity.update(t);
   if (current < order.length && activity.isDone()) {
     last = activity;
     activity = order[++current];
     if (activity) {
-      offsetX = (last.w + activity.w) / 2 + 32 + 10;
+      offsetX = (last.w + activity.w) * activityWidth / 2 + 32 + 10;
       offsetXQueue -= offsetX;
       activity.start();
     }
@@ -173,7 +207,6 @@ function idle() {
   
   if (d > nextBip) {
     nextBip++;
-    // speaker.speak("bip");
   }
 
   if (!music.isPlaying()) {
@@ -190,6 +223,14 @@ let theTime = Infinity;
 function draw() {
   if (theTime === Infinity)
     theTime = Date.now();
+  
+  /*
+  if (width < height) {
+    translate(width / 2, height / 2);
+    rotate(HALF_PI);
+    translate(-width / 2, -height / 2);
+  }
+  */
 
   idle();
 
@@ -209,7 +250,6 @@ function draw() {
   pop();
 
   if (started) {
-    
     offsetX *= 0.7;
 
     textStyle(NORMAL);
@@ -224,18 +264,18 @@ function draw() {
       activity.draw();
       pop();
       if (i + 1 < order.length) {
-        x += (order[i].w + order[i + 1].w) / 2 + 32 + 10;
+        x += (order[i].w + order[i + 1].w) * activityWidth / 2 + 32 + 10;
       }
     }
     pop();
 
     image(shade, 0, 0, width, height);
 
-    textSize(64);
+    textSize(timeSize);
     textStyle(BOLD);
     textAlign(CENTER, BOTTOM);
     if (current < order.length) {
-      text(order[current].remaining(), width / 2, height / 2 - order[0].h / 2 - 20);
+      text(order[current].remaining(), width / 2, height / 2 - order[0].h * activityWidth / 2 - 20);
     } else if (Math.floor(d * 2) % 2) {
       text((0).toFixed(2), width / 2, height / 5);
     }
@@ -254,16 +294,17 @@ function draw() {
     translate(width / 2, height / 2);
     rotate(logoTilt);
     scale(theScale, theScale);
-    image(logo, -logo.width / 2, -logo.height / 2);
+    image(logo, -logoW / 2, -logoH / 2, logoW, logoH);
     pop();
 
     textAlign(CENTER, BOTTOM);
-    textSize(32);
+    textSize(clickToStartSize);
     fill(255);
-    text("Cliquez pour commencer l'entraînement", width / 2, height - 20);
+    text(clickToStart, width / 2, height - 20);
   }
 }
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
+  computeAllSizes();
 }
