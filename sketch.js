@@ -48,11 +48,9 @@ class Activity {
     let borderWidth = 10;
 
     noStroke();
-    //fill(91, 202, 232);
-    //fill(255, 100);
     fill(255, 150);
     rect(-this.w / 2, -this.h / 2, this.w, this.h);
-    fill(1, 177, 226);
+    fill(227, 111, 0);
     rect(-this.w / 2, -this.h / 2, this.w * this.progress, this.h);
 
     textSize(28);
