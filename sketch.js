@@ -178,11 +178,14 @@ function setup() {
   started = false;
 
   computeAllSizes();
-
-  music.play();
 }
 
 function mousePressed() {
+  if (!userInteraction) {
+    userInteraction = true;
+    return;
+  }
+
   if (started) return;
 
   started = true;
@@ -220,7 +223,21 @@ let points;
 let offsetXQueue = 0;
 let theTime = Infinity;
 
+let userInteraction = false;
+
 function draw() {
+  if (!userInteraction) {
+    background(255);
+
+    noStroke();
+    fill(31);
+    textAlign(CENTER, CENTER);
+    textSize(32);
+    textStyle(NORMAL);
+    text("Please click once", width / 2, height / 2);
+    return;
+  }
+
   if (theTime === Infinity)
     theTime = Date.now();
   
