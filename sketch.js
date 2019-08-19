@@ -1,4 +1,4 @@
-const activityDuration = 60000;
+const activityDuration = 1000;
 const pauseDuration = 5000;
 let pompes;
 let muscu;
@@ -25,6 +25,11 @@ let activityWidth;
 
 function computeAllSizes() {
   activityWidth = Math.min(width / 2, height / 2, 500);
+
+  offsetXQueue = 0;
+  for (let i = 1; i <= current; i++) {
+    offsetXQueue -= (order[i-1].w + order[i].w) * activityWidth / 2 + 32 + 10;
+  }
 
   clickToStartSize = 32;
   textSize(clickToStartSize);
