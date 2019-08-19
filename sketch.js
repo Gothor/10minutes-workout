@@ -47,12 +47,13 @@ function computeAllSizes() {
 
 class Activity {
 
-  constructor(name, duration, sound, image) {
+  constructor(name, duration, sound, image, nbFrames) {
     this.name = name;
     this.duration = duration;
     this.sound = sound;
     this.image = image;
     this.startedTime = Infinity;
+    this.nbFrames = (nbFrames === undefined ? 1 : nbFrames);
     this.progress = 0;
     this.w = this.name === "Pause" ? 0.4 : 1;
     this.h = 1;
@@ -88,7 +89,9 @@ class Activity {
     textSize(28);
     fill(0);
     if (this.image) {
-      image(this.image, -w / 2, -h / 2, w, h);
+      let t = (Date.now() - theTime) / 480;
+      let i = Math.floor(t) % this.nbFrames;
+      image(this.image, -w / 2, -h / 2, w, h, (this.image.width / this.nbFrames) * i, 0, this.image.width / this.nbFrames, this.image.height);
     } else {
       text(this.name.split(' ').join('\n'), 0, 0);
     }
@@ -136,16 +139,16 @@ function preload() {
   sounds = {};
   
   pompes = [
-    new Activity("Pompes biceps", activityDuration, loadSound("pompesbiceps.wav"), null),
-    new Activity("Pompes triceps", activityDuration, loadSound("pompestriceps.wav"), null),
+    new Activity("Pompes biceps", activityDuration, loadSound("pompesbiceps.wav"), loadImage("pompesbiceps.png")),
+    new Activity("Pompes triceps", activityDuration, loadSound("pompestriceps.wav"), loadImage("pompestriceps.png")),
   ];
   muscu = [
     new Activity("Abdos", activityDuration, loadSound("abdos.wav"), loadImage("abdos.png")),
     new Activity("Squats", activityDuration, loadSound("squats.wav"), loadImage("squats.png")),
   ];
   cardio = [
-    new Activity("Montées de genoux", activityDuration, loadSound("monteesdegenoux.wav"), null),
-    new Activity("Jumping jacks", activityDuration, loadSound("jumpingjacks.wav"), null),
+    new Activity("Montées de genoux", activityDuration, loadSound("monteesdegenoux.wav"), loadImage("monteesdegenoux.png")),
+    new Activity("Jumping jacks", activityDuration, loadSound("jumpingjacks.wav"), loadImage("jumpingjacks.png"), 2),
     new Activity("Talons-fesses", activityDuration, loadSound("talonsfesses.wav"), loadImage("talonsfesses.png")),
   ];
   rope = new Activity("Corde à sauter", activityDuration, loadSound("cordeasauter.wav"), null);
