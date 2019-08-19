@@ -1,4 +1,4 @@
-const activityDuration = 1000;
+const activityDuration = 60000;
 const pauseDuration = 5000;
 let pompes;
 let muscu;
