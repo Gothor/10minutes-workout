@@ -19,6 +19,7 @@ let clickToStartSize;
 let logoW;
 let logoH;
 const clickToStart = "Cliquez pour commencer l'entraînement";
+let userIsHere = true;
 
 let activityWidth;
 
@@ -183,10 +184,12 @@ function setup() {
   computeAllSizes();
 
   window.addEventListener("blur", function() {
-    if (music.isPlaying()) {
-      music.pause();
-    }
+    userIsHere = false;
   });
+
+  window.addEventListener("focus", function() {
+    userIsHere = true;
+  })
 }
 
 function mobilecheck() {
@@ -204,7 +207,7 @@ if (mobilecheck()) {
 }
 
 function clickHandler(e) {
-  if (!e.touches || e.touches.length !== 0) return;
+  if (e.touches && e.touches.length !== 0) return;
 
   if (!userInteraction) {
     userInteraction = true;
@@ -237,8 +240,11 @@ function idle() {
     nextBip++;
   }
 
-  if (!music.isPlaying()) {
+  let isPlaying = music.isPlaying();
+  if (userIsHere && !isPlaying) {
     music.play();
+  } else if (!userIsHere && isPlaying) {
+    music.pause();
   }
 }
 
