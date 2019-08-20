@@ -153,25 +153,25 @@ function preload() {
   sounds = {};
   
   pompes = [
-    new Activity("Pompes biceps", activityDuration, loadSound("pompesbiceps.wav"), loadImage("pompesbiceps.png")),
-    new Activity("Pompes triceps", activityDuration, loadSound("pompestriceps.wav"), loadImage("pompestriceps.png")),
+    new Activity("Pompes biceps", activityDuration, loadSound("sound/pompesbiceps.wav"), loadImage("img/pompesbiceps.png")),
+    new Activity("Pompes triceps", activityDuration, loadSound("sound/pompestriceps.wav"), loadImage("img/pompestriceps.png")),
   ];
   muscu = [
-    new Activity("Abdos", activityDuration, loadSound("abdos.wav"), loadImage("abdos.png")),
-    new Activity("Squats", activityDuration, loadSound("squats.wav"), loadImage("squats.png")),
+    new Activity("Abdos", activityDuration, loadSound("sound/abdos.wav"), loadImage("img/abdos.png")),
+    new Activity("Squats", activityDuration, loadSound("sound/squats.wav"), loadImage("img/squats.png")),
   ];
   cardio = [
-    new Activity("Montées de genoux", activityDuration, loadSound("monteesdegenoux.wav"), loadImage("monteesdegenoux.png")),
-    new Activity("Jumping jacks", activityDuration, loadSound("jumpingjacks.wav"), loadImage("jumpingjacks.png"), 2),
-    new Activity("Talons-fesses", activityDuration, loadSound("talonsfesses.wav"), loadImage("talonsfesses.png")),
+    new Activity("Montées de genoux", activityDuration, loadSound("sound/monteesdegenoux.wav"), loadImage("img/monteesdegenoux.png")),
+    new Activity("Jumping jacks", activityDuration, loadSound("sound/jumpingjacks.wav"), loadImage("img/jumpingjacks.png"), 2),
+    new Activity("Talons-fesses", activityDuration, loadSound("sound/talonsfesses.wav"), loadImage("img/talonsfesses.png")),
   ];
-  rope = new Activity("Corde à sauter", activityDuration, loadSound("cordeasauter.wav"), null);
-  pause = new Activity("Pause", pauseDuration, loadSound("pause.wav"), loadImage("pause.png"));
+  rope = new Activity("Corde à sauter", activityDuration, loadSound("sound/cordeasauter.wav"), null);
+  pause = new Activity("Pause", pauseDuration, loadSound("sound/pause.wav"), loadImage("img/pause.png"));
 
-  logo = loadImage("logo.png");
-  shade = loadImage("shade.png");
-  playButton = loadImage("playButton.png");
-  music = loadSound("Funky_Disco.mp3");
+  logo = loadImage("img/logo.png");
+  shade = loadImage("img/shade.png");
+  playButton = loadImage("img/playButton.png");
+  music = loadSound("sound/Funky_Disco.mp3");
 }
 
 function setup() {
