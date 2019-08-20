@@ -5,6 +5,9 @@ let muscu;
 let cardio;
 let rope;
 let pause;
+let playButton;
+let paused = false;
+let pauseSource = null;
 let activities;
 let order;
 let current;
@@ -19,8 +22,12 @@ let clickToStartSize;
 let logoW;
 let logoH;
 const clickToStart = "Cliquez pour commencer l'entraînement";
-let userIsHere = true;
-
+let offsetX = 0;
+let logoTilt = 0;
+let points;
+let offsetXQueue = 0;
+let Time;
+let userInteraction = false;
 let activityWidth;
 
 function computeAllSizes() {
@@ -56,46 +63,47 @@ class Activity {
   constructor(name, duration, sound, image, nbFrames) {
     this.name = name;
     this.duration = duration;
+    this.remaining = duration;
     this.sound = sound;
     this.image = image;
     this.startedTime = Infinity;
     this.nbFrames = (nbFrames === undefined ? 1 : nbFrames);
-    this.progress = 0;
     this.w = this.name === "Pause" ? 0.4 : 1;
     this.h = 1;
   }
 
   start() {
-    this.startedTime = Date.now();
+    this.startedTime = Time.current;
     if (this.sound) {
       music.setVolume(0.5);
       this.sound.play();
     }
   }
 
-  update(t) {
+  update() {
     if (!this.sound.isPlaying()) {
       music.setVolume(1);
     }
-    this.progress = (t - this.startedTime) / this.duration;
-    this.progress = Math.min(this.progress, 1);
+    this.remaining -= Time.delta;
   }
 
   draw() {
     let w = this.w * activityWidth;
     let h = this.h * activityWidth;
     let borderWidth = activityWidth / 50;
+    let progress = (Time.current - this.startedTime) / this.duration;
+    progress = Math.min(this.progress, 1);
 
     noStroke();
     fill(255, 150);
     rect(-w / 2, -h / 2, w, h);
     fill(227, 111, 0);
-    rect(-w / 2, -h / 2, w * this.progress, h);
+    rect(-w / 2, -h / 2, w * progress, h);
 
     textSize(28);
     fill(0);
     if (this.image) {
-      let t = (Date.now() - theTime) / 480;
+      let t = Time.elapsed / 480;
       let i = Math.floor(t) % this.nbFrames;
       image(this.image, -w / 2, -h / 2, w, h, (this.image.width / this.nbFrames) * i, 0, this.image.width / this.nbFrames, this.image.height);
     } else {
@@ -109,15 +117,15 @@ class Activity {
   }
 
   isDone() {
-    return this.progress === 1;
+    return this.remaining <= 0;
   }
 
   clone() {
     return new Activity(this.name, this.duration, this.sound, this.image);
   }
 
-  remaining() {
-    return ((this.duration - Date.now() + this.startedTime) / 1000).toFixed(2);
+  formatRemaining() {
+    return (this.remaining / 1000).toFixed(2);
   }
 
 }
@@ -162,6 +170,7 @@ function preload() {
 
   logo = loadImage("logo.png");
   shade = loadImage("shade.png");
+  playButton = loadImage("playButton.png");
   music = loadSound("Funky_Disco.mp3");
 }
 
@@ -188,13 +197,48 @@ function setup() {
 
   computeAllSizes();
 
-  window.addEventListener("blur", function() {
-    userIsHere = false;
-  });
+  window.addEventListener("blur", () => {
+    if (paused) return;
 
-  window.addEventListener("focus", function() {
-    userIsHere = true;
-  })
+    pauseSource = "blur";
+    setPause();
+  });
+  window.addEventListener("focus", () => {
+    if (pauseSource !== "blur") return;
+
+    unsetPause();
+  });
+}
+
+function togglePause(source) {
+  if (!paused) {
+    pauseSource = source;
+    setPause();
+  } else if(pauseSource === source) {
+    pauseSource = null;
+    unsetPause();
+  }
+}
+
+function setPause() {
+  paused = true;
+  checkSound();
+}
+
+function unsetPause() {
+  paused = false;
+  pauseSource = null;
+  updateTime();
+  checkSound();
+}
+
+function checkSound() {
+  let isPlaying = music.isPlaying();
+  if (!paused && !isPlaying) {
+    music.play();
+  } else if (paused && isPlaying) {
+    music.pause();
+  }
 }
 
 function mobilecheck() {
@@ -211,6 +255,27 @@ if (mobilecheck()) {
   document.addEventListener('mouseup', clickHandler);
 }
 
+function createTime() {
+  let t = Date.now();
+  Time = {
+    start: t,
+    elapsed: 0,
+    current: t,
+    delta: 0
+  };
+}
+
+function updateTime() {
+  if (!Time) {
+    return createTime();
+  }
+
+  let t = Date.now();
+  Time.delta = t - Time.current;
+  Time.current = t;
+  Time.elapsed = Time.current - Time.start;
+}
+
 function clickHandler(e) {
   if (e.touches && e.touches.length !== 0) return;
 
@@ -219,18 +284,27 @@ function clickHandler(e) {
     return;
   }
 
-  if (started) return;
-
-  started = true;
-  nextBip = order[current].duration - 3;
-  order[current].start();
+  if (!started) {
+    started = true;
+    nextBip = order[current].duration - 3;
+    order[current].start();
+  } else if (mouseX >= width - 75 && mouseY < 75) {
+    togglePause("pauseButton");
+  }
 }
 
 function idle() {
-  let activity = order[current];
-  t = Date.now();
+  updateTime();
+  
+  checkSound();
 
-  activity.update(t);
+  if (!started || paused) return;
+
+  let activity = order[current];
+
+  if (!activity) return;
+
+  activity.update();
   if (current < order.length && activity.isDone()) {
     last = activity;
     activity = order[++current];
@@ -238,28 +312,14 @@ function idle() {
       offsetX = (last.w + activity.w) * activityWidth / 2 + 32 + 10;
       offsetXQueue -= offsetX;
       activity.start();
+      activity.remaining += last.remaining;
     }
   }
   
   if (d > nextBip) {
     nextBip++;
   }
-
-  let isPlaying = music.isPlaying();
-  if (userIsHere && !isPlaying) {
-    music.play();
-  } else if (!userIsHere && isPlaying) {
-    music.pause();
-  }
 }
-
-let offsetX = 0;
-let logoTilt = 0;
-let points;
-let offsetXQueue = 0;
-let theTime = Infinity;
-
-let userInteraction = false;
 
 function draw() {
   if (!userInteraction) {
@@ -273,9 +333,6 @@ function draw() {
     text("Please click once", width / 2, height / 2);
     return;
   }
-
-  if (theTime === Infinity)
-    theTime = Date.now();
 
   idle();
 
@@ -294,6 +351,7 @@ function draw() {
   }
   pop();
 
+  // Started
   if (started) {
     offsetX *= 0.7;
 
@@ -320,16 +378,23 @@ function draw() {
     textStyle(BOLD);
     textAlign(CENTER, BOTTOM);
     if (current < order.length) {
-      text(order[current].remaining(), width / 2, height / 2 - order[0].h * activityWidth / 2 - 20);
+      text(order[current].formatRemaining(), width / 2, height / 2 - order[0].h * activityWidth / 2 - 20);
     } else if (Math.floor(d * 2) % 2) {
       text((0).toFixed(2), width / 2, height / 5);
     }
+
+    if (!paused)
+      image(pause.image, width - 53, 0, 30, 75);
+    else {
+      image(playButton, width - 75, 0, 75, 75);
+    }
+  // Not started
   } else {
     image(shade, 0, 0, width, height);
 
     logoTilt = -Math.cos(frameCount / 300 * PI) / 30 - 0.1;
     
-    let theScale = (Date.now() - theTime) % 500;
+    let theScale = Time.elapsed % 500;
     theScale -= 450;
     theScale = Math.abs(theScale);
     if (theScale > 100) theScale = 1;
@@ -352,4 +417,12 @@ function draw() {
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   computeAllSizes();
+}
+
+function keyPressed() {
+  if(!started) return;
+
+  if (keyCode === 32) {
+    togglePause("pauseButton");
+  }
 }
